@@ -8,7 +8,7 @@ pip --version
 
 > 一般下载python的时候都是自动安装的，如果没安装的话看一下这个：https://pip.pypa.io/en/stable/installation/
 
-pip设置的默认源是官方源：https://pypi.org/simple，这个源在国内的下载速度是很慢的，所以我们为了提高包的下载速度我们可以通过换源来实现。（如果你速度正常可以无视）
+pip设置的默认源是官方源：https://pypi.org/simple ，这个源在国内的下载速度是很慢的，所以我们为了提高包的下载速度我们可以通过换源来实现。（如果你速度正常可以无视）
 
 1. 临时换源
 
@@ -354,7 +354,7 @@ data * 1.6
 
 ### 排序相关
 
-![](./img/matrix.png)
+![](./img/sort.png)
 
 ### 一元计算函数
 
