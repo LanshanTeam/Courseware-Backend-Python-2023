@@ -55,7 +55,9 @@
 
 ![img](https://ai-studio-static-online.cdn.bcebos.com/9f7cc7174c6f482b9b0d3a1f9bdc1195cf9bf0bc24d140da87aceba2dde4ea5d)
 
-## 感知器
+## 线性神经网络
+
+### 感知器
 
 为了理解神经网络，我们应该先理解神经网络的组成单元——**神经元**。神经元也叫做**感知器**。
 
@@ -87,7 +89,7 @@
 
 如果看完上面的公式一下子就晕了，不要紧，我们用一个简单的例子来帮助理解。
 
-## 训练一个与函数
+### 训练一个与函数
 
 | x1   | x2   | y    |
 | ---- | ---- | ---- |
@@ -275,6 +277,63 @@ if __name__ == '__main__':
 6. 重复训练：重复进行步骤3到5，直到达到停止条件。停止条件可以是达到一定的训练轮数、达到一定的精度要求或损失函数收敛等。
 7. 预测和评估：训练完成后，使用感知器对新样本进行预测，并评估模型的性能。常用的评估指标包括准确率、精确率、召回率和F1分数等。
 
+> 这是与函数的图形化表示，我们通过跃阶函数将这条线的上方区域转化成1,下方转化称成0。
+>
+> ![深度学习实战教程(一)：感知器](https://cuijiahua.com/wp-content/uploads/2018/10/dl-7-14.png)
+>
+> 但是通过这个感知器，你无法实现以下的函数，异或函数（相同得1,不同得0），因为你找不到一条直线可以把圆形和叉分在两边。
+>
+> ![深度学习实战教程(一)：感知器](https://cuijiahua.com/wp-content/uploads/2018/10/dl-7-15.png)
+
+### 线性回归
+
+- 多输入，一输出
+
+- 和上面的模型差不多
+
+![../_images/singleneuron.svg](https://zh.d2l.ai/_images/singleneuron.svg)
+
+### softmax回归
+
+- 多输入，多输出
+
+- 多用于解决分类问题
+
+![../_images/softmaxreg.svg](https://zh.d2l.ai/_images/softmaxreg.svg)
+
+## 多层感知机
+
+- 大部分问题不是线性的，所以添加一个隐藏层，更易于捕捉到输入之间复杂的相互作用，表示更复杂的模型
+- 隐藏层也可以不只一个，可以用更深的网络，可能更易于逼近一些函数
+
+![../_images/mlp.svg](./img/muti.png)
+
+### 激活函数
+
+*激活函数*（activation function）通过计算加权和并加上偏置来确定神经元是否应该被激活， 它们将输入信号转换为输出的可微运算。
+
+> 实际上，每一层的输入都可以用激活函数，但是要根据情况去选择。
+
+#### ReLU函数
+
+ReLU函数通过将相应的活性值设为0，仅保留正元素并丢弃所有负元素。 
+
+使用ReLU的原因是，它求导表现得特别好：要么让参数消失，要么让参数通过。
+
+![image-20231122103605746](./img/relu.png)
+
+![../_images/output_mlp_76f463_18_1.svg](https://zh.d2l.ai/_images/output_mlp_76f463_18_1.svg)
+
+#### Sigmoid函数
+
+*sigmoid函数*将输入变换为区间(0, 1)上的输出。 因此，sigmoid通常称为*挤压函数*（squashing function）： 它将范围（-inf, inf）中的任意输入压缩到区间（0, 1）中的某个值：
+
+它是一个平滑的、可微的阈值单元近似。 当我们想要将输出视作二元分类问题的概率时， sigmoid仍然被广泛用作**输出**单元上的激活函数 （sigmoid可以视为softmax的特例）。 
+
+![image-20231122104751861](./img/sigmoid.png)
+
+![../_images/output_mlp_76f463_48_0.svg](https://zh.d2l.ai/_images/output_mlp_76f463_48_0.svg)
+
 ## 深度学习框架
 
 深度学习框架是用于构建、训练和部署深度学习模型的软件工具集合。它们提供了一种方便的方式来定义、优化和执行神经网络模型。以下是一些常见的深度学习框架：
@@ -287,21 +346,358 @@ if __name__ == '__main__':
 
    https://pytorch.org/tutorials/
 
-3. Keras：Keras是一个高级神经网络API，它**可以运行在多个深度学习框架**上，**包括TensorFlow、PyTorch**和CNTK等。Keras的设计目标是提供简单易用的接口，使得快速原型设计和实验变得更加容易。
+3. Keras：Keras是一个高级神经网络API，它**可以运行在多个深度学习框架**上，**包括TensorFlow、PyTorch**等。Keras的设计目标是提供简单易用的接口，使得快速原型设计和实验变得更加容易。
 
 还有一个框架是paddlepaddle：https://www.paddlepaddle.org.cn/tutorials/projectdetail/5603475
 
 > 我怀疑以上三个在我们今后的学习中都会用到，为什么呢？
 >
-> 因为你想在网上抄别人的模型来运行，他大概率用的是tensorflow或者pytorch，你要是不会的话可能都抄不明白，paddlepaddle可以免费用gpu算力，而且他的教程也很详细，很适合入门。
+> 因为你想在网上抄别人的模型来运行，他大概率用的是tensorflow或者pytorch，你要是不会的话可能都抄不明白。
 
-因为我们的学习几乎要基于example，也就是不用自己写完整代码，只要能看懂，会改代码就行了。
+我们的学习几乎要基于example，也就是不用自己写完整代码，只要能看懂，会改代码就行了。
 
 接下来我们感受一下，顺便看看代码：
 
-## 图像分类
+## 深度学习实战
 
-### 训练
+### 图像分类
+
+pytorch官网的quick start , 先尝试自己运行
+
+#### Pytorch
+
+```bash
+pip install torch # 或者
+```
+
+```bash
+conda install torch # anaconda环境下
+```
+
+**代码**
+
+```python
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
+
+# 下载训练数据和测试数据
+training_data = datasets.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor(),
+)
+
+test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=ToTensor(),
+)
+
+batch_size = 64
+
+# 加载数据
+train_dataloader = DataLoader(training_data, batch_size=batch_size)
+test_dataloader = DataLoader(test_data, batch_size=batch_size)
+
+# 获取第一批次的图像和标签
+images, labels = next(iter(test_dataloader))
+# 获取第一张图像
+image = images[0]
+label = labels[0]
+# 将图像的形状从 [C, H, W] 转换为 [H, W, C]
+image = image.permute(1, 2, 0)
+# 将标签转换为对应的类别名称
+class_names = [
+    "T-shirt/top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle boot"
+]
+class_name = class_names[label]
+# 显示图像
+plt.imshow(image)
+plt.title(class_name)
+plt.axis('off')
+plt.show()
+
+for X, y in test_dataloader:
+    print(f"Shape of X [N, C, H, W]: {X.shape}")  # 打印输入数据 X 的形状
+    print(f"Shape of y: {y.shape} {y.dtype}")  # 打印标签数据 y 的形状和数据类型
+    break  # 仅打印一次后退出循环
+
+# 获取用于训练的CPU、GPU或MPS设备
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
+print(f"Using {device} device")
+
+
+# 定义模型
+class NeuralNetwork(nn.Module):
+    def __init__(self):
+        """
+        神经网络模型的初始化函数。
+
+        参数：
+            无输入参数。
+
+        输出：
+            无输出，用于初始化神经网络模型的各个层。
+
+        """
+        super().__init__()
+
+        # 将输入数据展平
+        self.flatten = nn.Flatten()
+
+        # 定义线性层和激活函数的堆叠
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(28 * 28, 512),  # 输入大小为 28 * 28，输出大小为 512
+            nn.ReLU(),  # ReLU 激活函数
+            nn.Linear(512, 512),  # 输入大小为 512，输出大小为 512
+            nn.ReLU(),  # ReLU 激活函数
+            nn.Linear(512, 10)  # 输入大小为 512，输出大小为 10
+        )
+
+    def forward(self, x):
+        """
+        神经网络模型的前向传播函数。
+
+        参数：
+            x (torch.Tensor): 输入数据。
+
+        输出：
+            logits (torch.Tensor): 模型的预测结果（未经过激活函数）。
+
+        """
+        # 展平输入数据
+        x = self.flatten(x)
+
+        # 通过线性层和激活函数的堆叠进行前向传播
+        logits = self.linear_relu_stack(x)
+
+        return logits
+
+
+model = NeuralNetwork().to(device)  # 创建神经网络模型实例，并将其移动到指定的设备上（如 CPU 或 GPU）
+print(model)  # 打印神经网络模型的结构
+
+loss_fn = nn.CrossEntropyLoss()  # 定义损失函数为交叉熵损失函数
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)  # 定义优化器为随机梯度下降（SGD），学习率为 0.001
+
+
+def train(dataloader, model, loss_fn, optimizer):
+    """
+    对给定的数据加载器进行训练，更新模型的参数。
+
+    参数：
+        dataloader (torch.utils.data.DataLoader): 数据加载器，用于加载训练数据集。
+        model (torch.nn.Module): 神经网络模型。
+        loss_fn (torch.nn.Module): 损失函数，用于计算预测结果与真实标签之间的损失。
+        optimizer (torch.optim.Optimizer): 优化器，用于更新模型的参数。
+
+    输出：
+        无返回值，用于训练和更新模型。
+
+    """
+    size = len(dataloader.dataset)  # 数据集的大小
+    model.train()  # 设置模型为训练模式
+    for batch, (X, y) in enumerate(dataloader):  # 遍历数据加载器中的每个批次
+        X, y = X.to(device), y.to(device)  # 将输入数据和标签移动到指定的设备上（如 CPU 或 GPU）
+
+        # 计算预测误差
+        pred = model(X)  # 前向传播，获取模型的预测结果
+        loss = loss_fn(pred, y)  # 计算预测结果与真实标签之间的损失
+
+        # 反向传播和优化
+        loss.backward()  # 反向传播，计算梯度
+        optimizer.step()  # 根据梯度更新模型的参数
+        optimizer.zero_grad()  # 清空梯度，准备处理下一个批次的数据。
+
+        if batch % 100 == 0:  # 如果当前批次是第 100 的倍数（用于控制打印频率）
+            loss, current = loss.item(), (batch + 1) * len(X)  # 获取当前批次的损失值和已处理的样本数。
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")  # 打印当前批次的损失值和已处理的样本数。
+
+
+def test(dataloader, model, loss_fn):
+    """
+    对给定的数据加载器进行测试，评估模型的性能。
+
+    参数：
+        dataloader (torch.utils.data.DataLoader): 数据加载器，用于加载测试数据集。
+        model (torch.nn.Module): 神经网络模型。
+        loss_fn (torch.nn.Module): 损失函数，用于计算预测结果与真实标签之间的损失。
+
+    输出：
+        无返回值，打印测试结果。
+
+    """
+    size = len(dataloader.dataset)  # 数据集的大小
+    num_batches = len(dataloader)  # 批次的数量
+    model.eval()  # 设置模型为评估模式，这将禁用一些特定于训练的操作，如 Dropout。
+    test_loss, correct = 0, 0  # 初始化测试损失和正确预测的数量为0
+    with torch.no_grad():  # 在评估模式下，不需要计算梯度，因此使用 torch.no_grad() 上下文管理器来加速运算。
+        for X, y in dataloader:  # 遍历数据加载器中的每个批次
+            X, y = X.to(device), y.to(device)  # 将输入数据和标签移动到指定的设备上（如 CPU 或 GPU）
+            pred = model(X)  # 前向传播，获取模型的预测结果
+            test_loss += loss_fn(pred, y).item()  # 累加当前批次的损失值
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()  # 累加正确预测的数量
+    test_loss /= num_batches  # 计算平均测试损失
+    correct /= size  # 计算准确率
+    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+
+# 训练5轮，可以调整
+epochs = 5
+for t in range(epochs):
+    print(f"Epoch {t + 1}\n-------------------------------")
+    train(train_dataloader, model, loss_fn, optimizer)
+    test(test_dataloader, model, loss_fn)
+print("Done!")
+```
+
+#### Tensorflow
+
+这个是tensorflow给的示例代码，主要在用其中的keras，先尝试自己运行起来。
+
+**安装**
+
+```bash
+pip install tensorflow # 或者
+```
+
+```bash
+conda install tensorflow # anaconda环境下
+```
+
+默认是2.14版本，官方文档也是基于2.14版本的，如果你在网上查教程，那很有可能运行不了。（所以如果在github上找别人的代码也可能要尝试回退版本才能运行）
+
+这就突出了anaconda的好处，你可以在不同环境上装不同版本的，就不用每次pip来回调了（但同时也说明不安装anaconda也能正常“玩”）
+
+```bash
+pip install tensorflow == <版本号> # 回退版本
+```
+
+```bash
+conda install tensorflow == <版本号> # anaconda环境下
+```
+
+##### 训练
+
+```python
+# TensorFlow and tf.keras
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
+# print(tf.__version__)
+
+# 加载 Fashion MNIST 数据集
+fashion_mnist = tf.keras.datasets.fashion_mnist
+# 将数据集拆分为训练集和测试集
+# 训练集包含用于训练模型的图像和标签
+# 测试集包含用于评估模型性能的图像和标签
+(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+
+# 存储类名
+class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+# 训练集中有 60,000 个图像，每个图像由 28 x 28 的像素表示
+print(train_images.shape)
+#  (60000, 28, 28)
+
+# 训练集有60000个标签
+print(train_labels)
+print(len(train_labels))
+# 60000
+
+# 测试集中有 10,000 个图像。同样，每个图像都由 28x28 个像素
+print(test_images.shape)
+print(len(test_labels))
+
+# 预处理
+plt.figure()  # 创建一个新的图形（图表）窗口
+plt.imshow(train_images[9])  # 在图表上显示train_images中索引为9的图像
+plt.colorbar()  # 添加一个颜色条，用于显示图像中颜色对应的数值
+plt.grid(False)  # 不显示网格线
+plt.show()  # 显示图表窗口
+
+# 将这些值缩小至 0 到 1 之间，然后将其馈送到神经网络模型。
+train_images = train_images / 255.0
+
+test_images = test_images / 255.0
+
+# 为了验证数据的格式是否正确，以及您是否已准备好构建和训练网络，
+# 让我们显示训练集中的前 25 个图像，并在每个图像下方显示类名称。
+# 创建一个大小为 10x10 的图像窗口
+plt.figure(figsize=(10, 10))
+
+# 循环处理 25 个图像
+for i in range(25):
+    # 在 5x5 的子图中绘制当前图像
+    plt.subplot(5, 5, i + 1)
+
+    # 移除 x 轴和 y 轴的刻度
+    plt.xticks([])
+    plt.yticks([])
+
+    # 关闭网格线
+    plt.grid(False)
+
+    # 显示当前训练集图像
+    plt.imshow(train_images[i], cmap=plt.cm.binary)
+
+    # 在图像下方显示标签类别名称
+    plt.xlabel(class_names[train_labels[i]])
+
+# 显示图像窗口
+plt.show()
+
+# 创建一个序列模型
+model = tf.keras.Sequential([
+    # 将输入数据展平为一维向量，输入形状为 (28, 28)
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    # 添加一个具有 128 个神经元的全连接层，并使用 ReLU 激活函数
+    tf.keras.layers.Dense(128, activation='relu'),
+    # 添加一个具有 10 个神经元的全连接层，该层输出未经过激活的原始预测分数
+    tf.keras.layers.Dense(10)
+])
+
+# 编译模型
+model.compile(
+    # 使用了Adam优化器，Adam是一种常用的优化算法，用于调整模型的权重以最小化损失函数。
+    optimizer='adam',
+    # 稀疏分类交叉熵损失函数。该损失函数适用于多类别分类问题，其中目标标签是整数形式（而不是独热编码）。
+    # from_logits=True表示模型的输出是未经过概率分布转换的原始预测分数
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    # 指定了评估模型性能的指标，即准确率。在训练过程中，模型将根据准确率指标来评估和监控其性能
+    metrics=['accuracy'])
+
+# 训练模型
+# 向模型馈送数据
+model.fit(train_images, train_labels, epochs=10)
+model.save('image_classify.h5')
+```
+
+##### 测试
 
 ```python
 # TensorFlow and tf.keras
@@ -431,108 +827,6 @@ print(predictions_single)
 plot_value_array(1, predictions_single[0], test_labels)
 _ = plt.xticks(range(10), class_names, rotation=45)
 plt.show()
-```
-
-### 测试
-
-```python
-# TensorFlow and tf.keras
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import tensorflow as tf
-
-matplotlib.use('TkAgg')
-# Helper libraries
-
-# print(tf.__version__)
-
-# 加载 Fashion MNIST 数据集
-fashion_mnist = tf.keras.datasets.fashion_mnist
-# 将数据集拆分为训练集和测试集
-# 训练集包含用于训练模型的图像和标签
-# 测试集包含用于评估模型性能的图像和标签
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-
-# 存储类名
-class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-
-# 训练集中有 60,000 个图像，每个图像由 28 x 28 的像素表示
-print(train_images.shape)
-#  (60000, 28, 28)
-
-# 训练集有60000个标签
-print(train_labels)
-print(len(train_labels))
-# 60000
-
-# 测试集中有 10,000 个图像。同样，每个图像都由 28x28 个像素
-print(test_images.shape)
-print(len(test_labels))
-
-# 预处理
-plt.figure()  # 创建一个新的图形（图表）窗口
-plt.imshow(train_images[9])  # 在图表上显示train_images中索引为9的图像
-plt.colorbar()  # 添加一个颜色条，用于显示图像中颜色对应的数值
-plt.grid(False)  # 不显示网格线
-plt.show()  # 显示图表窗口
-
-# 将这些值缩小至 0 到 1 之间，然后将其馈送到神经网络模型。
-train_images = train_images / 255.0
-
-test_images = test_images / 255.0
-
-# 为了验证数据的格式是否正确，以及您是否已准备好构建和训练网络，
-# 让我们显示训练集中的前 25 个图像，并在每个图像下方显示类名称。
-# 创建一个大小为 10x10 的图像窗口
-plt.figure(figsize=(10, 10))
-
-# 循环处理 25 个图像
-for i in range(25):
-    # 在 5x5 的子图中绘制当前图像
-    plt.subplot(5, 5, i + 1)
-
-    # 移除 x 轴和 y 轴的刻度
-    plt.xticks([])
-    plt.yticks([])
-
-    # 关闭网格线
-    plt.grid(False)
-
-    # 显示当前训练集图像
-    plt.imshow(train_images[i], cmap=plt.cm.binary)
-
-    # 在图像下方显示标签类别名称
-    plt.xlabel(class_names[train_labels[i]])
-
-# 显示图像窗口
-plt.show()
-
-# 创建一个序列模型
-model = tf.keras.Sequential([
-    # 将输入数据展平为一维向量，输入形状为 (28, 28)
-    tf.keras.layers.Flatten(input_shape=(28, 28)),
-    # 添加一个具有 128 个神经元的全连接层，并使用 ReLU 激活函数
-    tf.keras.layers.Dense(128, activation='relu'),
-    # 添加一个具有 10 个神经元的全连接层，该层输出未经过激活的原始预测分数
-    tf.keras.layers.Dense(10)
-])
-
-# 编译模型
-model.compile(
-    # 使用了Adam优化器，Adam是一种常用的优化算法，用于调整模型的权重以最小化损失函数。
-    optimizer='adam',
-    # 稀疏分类交叉熵损失函数。该损失函数适用于多类别分类问题，其中目标标签是整数形式（而不是独热编码）。
-    # from_logits=True表示模型的输出是未经过概率分布转换的原始预测分数
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    # 指定了评估模型性能的指标，即准确率。在训练过程中，模型将根据准确率指标来评估和监控其性能
-    metrics=['accuracy'])
-
-# 训练模型
-# 向模型馈送数据
-model.fit(train_images, train_labels, epochs=10)
-model.save('image_classify.h5')
 ```
 
 # 理论
