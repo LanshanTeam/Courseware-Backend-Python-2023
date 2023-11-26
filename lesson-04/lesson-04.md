@@ -38,6 +38,8 @@
 
 ## 机器学习与深度学习
 
+深度学习是机器学习的一个子集
+
 区别：
 
 1. 方法和模型复杂度：机器学习方法通常基于统计学和模式识别等原理，使用各种算法和模型来从数据中学习规律和模式。深度学习是机器学习的一个**子领域**，它专注于使用多层神经网络模型来学习更高级的抽象特征表示，可以处理更复杂的数据和任务。
@@ -303,7 +305,7 @@ if __name__ == '__main__':
 
 ## 多层感知机
 
-- 大部分问题不是线性的，所以添加一个隐藏层，更易于捕捉到输入之间复杂的相互作用，表示更复杂的模型
+- 大部分问题不是线性的，所以添加一个隐藏层，更易于捕捉到输入与输出之间复杂的相互作用，表示更复杂的模型
 - 隐藏层也可以不只一个，可以用更深的网络，可能更易于逼近一些函数
 
 ![../_images/mlp.svg](./img/muti.png)
@@ -359,6 +361,83 @@ ReLU函数通过将相应的活性值设为0，仅保留正元素并丢弃所有
 接下来我们感受一下，顺便看看代码：
 
 ## 深度学习实战
+
+### 线性回归
+
+```python
+# 基本的线性回归拟合线段
+import torch
+from torch.nn import Linear, MSELoss
+from torch.optim import SGD
+import numpy as np
+import matplotlib.pyplot as plt
+
+# print(torch.__version__)
+
+x = np.linspace(0, 20, 500)
+y = 5 * x + 7
+plt.plot(x, y)
+plt.show()
+
+# 生成一些随机的点，来作为训练数据
+x = np.random.rand(256)
+noise = np.random.randn(256) / 4
+y = x * 5 + 7 + noise
+
+# 散点图
+plt.scatter(x, y)
+plt.show()
+
+# 其中参数(1, 1)代表输入输出的特征(feature)数量都是1. Linear 模型的表达式是y=w⋅x+b其中 w代表权重， b代表偏置
+model = Linear(1, 1)
+
+# 损失函数我们使用均方损失函数：MSELoss
+criterion = MSELoss()
+
+# 优化器我们选择最常见的优化方法 SGD，就是每一次迭代计算 mini-batch 的梯度，然后对参数进行更新，学习率 0.01
+optim = SGD(model.parameters(), lr=0.01)
+
+# 训练3000次
+epochs = 3000
+
+# 准备训练数据: x_train, y_train 的形状是 (256, 1)，
+# 代表 mini-batch 大小为256，
+# feature 为1. astype('float32') 是为了下一步可以直接转换为 torch.float
+x_train = x.reshape(-1, 1).astype('float32')
+y_train = y.reshape(-1, 1).astype('float32')
+
+for i in range(epochs):
+    # 整理输入和输出的数据，这里输入和输出一定要是torch的Tensor类型
+    inputs = torch.from_numpy(x_train)
+    labels = torch.from_numpy(y_train)
+    # 使用模型进行预测
+    outputs = model(inputs)
+    # 梯度置0，否则会累加
+    optim.zero_grad()
+    # 计算损失
+    loss = criterion(outputs, labels)
+    # 反向传播
+    loss.backward()
+    # 使用优化器默认方法优化
+    optim.step()
+    if (i % 100 == 0):
+        # 每 100次打印一下损失函数，看看效果
+        print('epoch {}, loss {:1.4f}'.format(i, loss.data.item()))
+pip install torch
+[w, b] = model.parameters()
+print(w.item(), b.item())
+
+predicted = model.forward(torch.from_numpy(x_train)).data.numpy()
+plt.plot(x_train, y_train, 'go', label='data', alpha=0.3)
+plt.plot(x_train, predicted, label='predicted', alpha=1)
+plt.legend()
+plt.show()
+
+x_new = np.array([[3.]], dtype=np.float32)
+x_new_tensor = torch.from_numpy(x_new)
+predicted_new = model(x_new_tensor).item()
+print(predicted_new)
+```
 
 ### 图像分类
 
@@ -837,6 +916,7 @@ plt.show()
 
 - 数据集
 - 训练集
+- 测试集
 - 标签
 - 特征
 - 权重
@@ -854,3 +934,11 @@ plt.show()
 ### 随机梯度下降
 
 ![深度学习实战教程(二)：线性单元和梯度下降](https://cuijiahua.com/wp-content/uploads/2018/11/dl-8-4.png)
+
+# 作业
+
+1. 跑通本节课所有代码，截图。
+2. 用多层感知机训练一个 y=x1的平方+x2的平方 的函数（pytorch/tensorflow）
+3. 有空自己看看pytorch或者tensorflow官网的exmaple代码并运行，随便什么都行，运行的话可以截图提交
+
+提交到 fw55ffww@outlook.com 署名+学号
