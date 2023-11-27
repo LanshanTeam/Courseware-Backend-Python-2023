@@ -28,6 +28,16 @@ test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
 # 获取第一批次的图像和标签
 images, labels = next(iter(test_dataloader))
+print(f"Feature batch shape: {images.size()}")
+print(f"Labels batch shape: {labels.size()}")
+img = images[0].squeeze()
+label = labels[0]
+plt.imshow(img, cmap="Accent")  # cmap颜色映射
+plt.show()
+print(f"Label: {label}")
+
+
+
 # 获取第一张图像
 image = images[0]
 label = labels[0]
