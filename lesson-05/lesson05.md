@@ -708,7 +708,278 @@ Layer: linear_relu_stack.4.bias | Size: torch.Size([10]) | Values : tensor([ 0.0
 """
 ```
 
+## torch.autograd（自动微分）
 
+在训练神经网络时，最常用的算法之一是反向传播。在这个算法中，根据损失函数相对于给定参数的梯度来调整参数（模型权重）。
+
+为了计算这些梯度，PyTorch拥有一个内置的微分引擎，称为`torch.autograd`。它支持对任何计算图进行梯度的自动计算。
+
+考虑最简单的单层神经网络，具有输入x、参数w和b，以及某个损失函数。可以用以下方式在PyTorch中定义它：
+
+```python
+import torch
+
+x = torch.ones(5)  # 输入张量
+y = torch.zeros(3)  # 期望输出
+w = torch.randn(5, 3, requires_grad=True)
+b = torch.randn(3, requires_grad=True)
+z = torch.matmul(x, w)+b
+loss = torch.nn.functional.binary_cross_entropy_with_logits(z, y)
+```
+
+- `loss = torch.nn.functional.binary_cross_entropy_with_logits(z, y)`: 使用二元交叉熵损失函数计算模型输出 `z` 与期望输出 `y` 之间的损失。这个损失函数通常在二分类问题中使用。
+
+### 张量（Tensors）、函数（Functions）和计算图（Computational Graph）
+
+上图的计算图：
+
+![img](https://pytorch.org/tutorials/_images/comp-graph.png)
+
+在这个网络中，w和b是需要优化的参数。因此，我们需要能够计算损失函数相对于这些变量的梯度。为了实现这一点，我们设置这些张量的 `requires_grad` 属性。
+
+- 反向传播函数的引用存储在张量的 `grad_fn` 属性中。
+
+```python
+print(f"Gradient function for z = {z.grad_fn}")
+print(f"Gradient function for loss = {loss.grad_fn}")
+```
+
+### Computing Gradients（梯度计算）
+
+为了优化神经网络中的参数权重，我们需要计算损失函数相对于参数的导数，即计算：
+
+![](./img/loss1.png)
+
+![](./img/loss2.png)
+
+```python
+loss.backward()
+print(w.grad)
+print(b.grad)
+"""
+tensor([[0.3049, 0.2117, 0.2346],
+        [0.3049, 0.2117, 0.2346],
+        [0.3049, 0.2117, 0.2346],
+        [0.3049, 0.2117, 0.2346],
+        [0.3049, 0.2117, 0.2346]])
+tensor([0.3049, 0.2117, 0.2346])
+"""
+```
+
+- 只能获取计算图的叶节点的 `grad` 属性，这些节点的 `requires_grad` 属性设置为 `True`。对于计算图中的所有其他节点，梯度将不可用。
+- 在同一图上进行多次 `backward` 调用，需要在 `backward` 调用中传递 `retain_graph=True`。
+
+### Disabling Gradient Tracking（禁用梯度跟踪）
+
+```python
+z = torch.matmul(x, w)+b
+print(z.requires_grad)
+
+with torch.no_grad():
+    z = torch.matmul(x, w)+b
+print(z.requires_grad)
+
+# True
+# False
+```
+
+- **默认情况**下，所有 `requires_grad=True` 的张量都会追踪它们的计算历史并支持梯度计算。
+- 已经训练好模型，只想将其应用于一些输入数据时，即我们只想通过网络进行**前向计算**。我们可以通过使用 `torch.no_grad()` 块来停止跟踪计算过程。
+
+另一种实现相同结果的方法是使用张量的 `detach()` 方法：
+
+```python
+z = torch.matmul(x, w)+b
+z_det = z.detach()
+print(z_det.requires_grad)
+```
+
+
+禁用梯度跟踪的原因可能有以下几点：
+
+1. 将神经网络中的某些参数标记为**冻结参数**。
+2. 在只进行前向传播时**加快计算速度**，因为不跟踪梯度的张量上的计算会更有效率。
+
+> 后面部分我也看不懂，省略了。
+
+## OPTIMIZING MODEL PARAMETERS（优化模型参数）
+
+训练模型是一个迭代的过程；在每次迭代中，模型对输出进行猜测，计算其猜测的错误（损失），收集关于其参数的错误导数（正如我们在前面部分中看到的），然后使用梯度下降优化这些参数。
+
+### Prerequisite Code（先决条件代码）
+
+加载数据和构建模型
+
+```python
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+
+training_data = datasets.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor()
+)
+
+test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=ToTensor()
+)
+
+train_dataloader = DataLoader(training_data, batch_size=64)
+test_dataloader = DataLoader(test_data, batch_size=64)
+
+class NeuralNetwork(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(28*28, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 10),
+        )
+
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+
+model = NeuralNetwork()
+```
+
+### Hyperparameters（超参数）
+
+```python
+learning_rate = 1e-3
+batch_size = 64
+epochs = 5
+```
+
+- 训练轮数（Epochs） - 在整个数据集上迭代的次数。
+
+- 批处理大小（Batch Size） - 在更新参数之前通过网络传播的数据样本数。
+
+- 学习率（Learning Rate） - 在每个批次/轮次中更新模型参数的程度。较小的值会导致学习速度较慢，而较大的值可能在训练过程中产生不可预测的行为。
+
+### Optimization Loop（优化循环）
+
+一旦我们设置了超参数，就可以使用优化循环来训练和优化模型。优化循环的每个迭代被称为一个轮次（epoch）。
+
+每个轮次包含两个主要部分：
+
+1. **训练循环** - 遍历训练数据集并尝试收敛到最佳参数。
+2. **验证/测试循环** - 遍历测试数据集以检查模型性能是否有所提升。
+
+### Loss Function（损失函数）
+
+损失函数度量了获得的结果与目标值之间的**不相似程度**，而在训练过程中我们希望最小化损失函数。为了计算损失，我们使用模型对给定数据样本的输入进行预测，并将其与**真实数据标签值进行比较**。
+
+常见的损失函数包括用于回归任务的 nn.MSELoss（均方误差），以及用于分类的 nn.NLLLoss（负对数似然）。nn.CrossEntropyLoss 结合了 nn.LogSoftmax 和 nn.NLLLoss。
+
+```python
+# 初始化损失函数
+loss_fn = nn.CrossEntropyLoss()
+```
+
+### Optimizer（优化器）
+
+优化是调整模型参数以**在每个训练步骤中减少模型误差**的过程。优化算法定义了如何执行这个过程。在这里，我们使用 SGD 优化器；此外，PyTorch 中还有**许多不同的优化器**，如 ADAM 和 RMSProp，它们针对不同类型的模型和数据表现更好。
+
+```python
+# 初始化优化器
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+```
+
+在训练循环中，优化分为三个步骤：
+
+1. 调用 `optimizer.zero_grad()` 来重置模型参数的梯度。梯度默认会累积；为了**防止重复计算**，我们在每次迭代时**显式将它们清零**。
+2. 通过调用 `loss.backward()` **反向传播预测损失**。PyTorch 存储了损失相对于每个参数的梯度。
+3. 一旦得到梯度，我们调用 `optimizer.step()` 来**根据反向传播中收集的梯度调整参数**。
+
+# Pytorch实战
+
+相信通过上面的拆解分析，同学们应该了解了如何用pytorch写一个完整的训练过程，那么上次课的作业应该就比较简单了。
+
+## y=x1方+x2方
+
+```python
+import torch
+from torch import nn
+from torch.optim import SGD
+from torch.utils.data import Dataset, DataLoader
+
+
+class CustomDataset(Dataset):
+    def __init__(self, num_samples=1000):
+        torch.manual_seed(42)
+        self.X = (torch.rand((num_samples, 2)) - 0.5) * 10.0
+        self.y = self.X[:, 0] ** 2 + self.X[:, 1] ** 2
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+# 创建自定义数据集实例和数据加载器
+custom_dataset = CustomDataset()
+data_loader = DataLoader(dataset=custom_dataset, batch_size=32, shuffle=True)
+
+
+# 定义模型
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.linear1 = nn.Linear(2, 128)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(128, 64)
+        self.linear3 = nn.Linear(64, 1)
+
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.relu(x)
+        x = self.linear2(x)
+        x = self.relu(x)
+        return self.linear3(x)
+
+
+# 初始化模型、损失函数和优化器
+model = Model()
+criterion = nn.MSELoss()
+optimizer = SGD(model.parameters(), lr=0.001)
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+
+# 训练模型
+num_epochs = 2000
+for epoch in range(num_epochs):
+    for inputs, labels in data_loader:
+        # 前向传播
+        outputs = model(inputs)
+        loss = criterion(outputs.squeeze(), labels)
+        # 反向传播和优化
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    if (epoch + 1) % 100 == 0:
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+# 使用训练后的模型进行预测
+with torch.no_grad():
+    new_data = torch.tensor([[0., 2.]])
+    prediction = model(new_data)
+    print(f'Prediction for {new_data}: {prediction.item():.4f}')
+```
+
+> 我就随便调了一下，同学们也可以有不一样的网络结构和超参数，可能效果比我的还好
 
 # one-hot编码
 
