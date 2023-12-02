@@ -58,6 +58,10 @@
 
 把所有局部特征结合变成全局特征，用来计算最后每一类的得分。全连接层往往在**分类问题**中用作网络的最后层，作用主要为将数据矩阵进行全连接，然后按照分类数量输出数据。
 
+## 卷积动画
+
+https://www.bilibili.com/video/BV1AA411778b/?spm_id_from=333.337.search-card.all.click
+
 ## 训练过程
 
 ![img](img/cnn_train.png)
@@ -466,6 +470,22 @@ x = torch.flatten(x, -1)
 
 ![](./img/cnn_cal.png)
 
+> 我卷积了n次，好难算呀，怎么办？
+
+![](./img/0.png)
+
+运行一下程序：
+
+![](./img/error.png)
+
+所以说前者应该输入123648
+
+> 也可以打印形状、或者Pytorch内置实现了这种方法（但我暂时还没看见过）
+
+# 步长
+
+![](./img/stride.png)
+
 # 过拟合和欠拟合
 
 1. **过拟合（Overfitting）**：
@@ -612,7 +632,7 @@ writer.add_image('four_fashion_mnist_images', img_grid)
 tensorboard --logdir=runs # (找到对应路径)终端输入，然后访问localhost:6006
 ```
 
-![](/home/ros/Documents/machine-learning/img/tensorboard.png)
+![](img/tensorboard.png)
 
 ## Inspect（使用TensorBoard检查模型）
 
@@ -623,7 +643,7 @@ writer.add_graph(net, images)  # 使用add_graph方法将模型net以及输入�
 writer.close()  # 关闭TensorBoard的写入器，确保所有数据都已写入日志文件。
 ```
 
-![](/home/ros/Documents/machine-learning/img/graph.png)
+![](img/graph.png)
 
 ## Adding a “Projector” to TensorBoard
 
@@ -667,7 +687,7 @@ writer.close()
 
 现在在TensorBoard的"Projector"选项卡中，你可以看到这100个图像的投影，每个图像是784维的，被投影到三维空间中。
 
-![](/home/ros/Documents/machine-learning/img/3d.png)
+![](img/3d.png)
 
 > 这是动图，他会自己转
 
@@ -763,11 +783,11 @@ print('训练完成')
 
 查看：
 
-![image-20231130152016151](/home/ros/Documents/machine-learning/img/scalar.png)
+![image-20231130152016151](img/scalar.png)
 
 每一千轮随机抽取4件，查看预测准确率
 
-![image-20231130152501688](/home/ros/Documents/machine-learning/img/vs.png)
+![image-20231130152501688](img/vs.png)
 
 ## Assessing trained models with TensorBoard（评估模型）
 
@@ -810,11 +830,11 @@ for i in range(len(classes)):
 
 可以查看10个类别下的预测准确率曲线：
 
-![](/home/ros/Documents/machine-learning/img/cur.png)
+![](img/cur.png)
 
 ## 总结一下
 
-可以让你看懂自己在写什么
+可以让你看懂自己在干嘛
 
 # 作业
 
