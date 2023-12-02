@@ -1014,9 +1014,8 @@ torch.save(model, 'model.pth')
 
 ```python
 model = torch.load('model.pth')
+# 需要先对model初始化（用之前模型的那个类，可以用from...import...导入），然后才能加载
 ```
-
-> 这种可以认为是直接使用
 
 # Pytorch实战
 
