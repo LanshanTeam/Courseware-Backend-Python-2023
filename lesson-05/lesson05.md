@@ -687,7 +687,7 @@ Model structure: NeuralNetwork(
     (3): ReLU()
     (4): Linear(in_features=512, out_features=10, bias=True)
   )
-)
+
 
 
 Layer: linear_relu_stack.0.weight | Size: torch.Size([512, 784]) | Values : tensor([[ 0.0273,  0.0296, -0.0084,  ..., -0.0142,  0.0093,  0.0135],
@@ -1559,3 +1559,9 @@ save_pred(preds, 'pred.csv')  # save prediction file to pred.csv
    - **用途：** 用于最终评估模型的性能，检查模型对于未见过的数据的泛化能力。
    - **训练过程中不使用：** 测试集在模型训练过程中不会用于权重更新或超参数调整。它保留到训练结束后用于最终评估。
    - **样本数量：** 包含模型未见过的样本，用于模型的最终泛化性能评估。
+
+# 作业
+
+1. 运行课上的代码，截图，把代码看懂
+
+发送到fw55ffww@outlook.com
