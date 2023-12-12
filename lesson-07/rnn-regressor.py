@@ -1,14 +1,3 @@
-"""
-View more, visit my tutorial page: https://mofanpy.com/tutorials/
-My Youtube Channel: https://www.youtube.com/user/MorvanZhou
-
-Dependencies:
-torch: 0.4
-matplotlib
-numpy
-"""
-import time
-
 import torch
 from torch import nn
 import numpy as np

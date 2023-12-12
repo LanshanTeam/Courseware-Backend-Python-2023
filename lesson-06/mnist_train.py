@@ -17,11 +17,11 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(64 * 12 * 12, 128)  # 为什么是64*12*12
+        self.fc1 = nn.Linear(64*12*12, 128)  # 为什么是64*12*12
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = self.conv1(x)  # 32*26*26
+        x = self.conv1(x)  # 64*26*26
         x = F.relu(x)
         x = self.conv2(x)  # 64*24*24
         x = F.relu(x)
@@ -30,9 +30,9 @@ class Net(nn.Module):
         # print(x.size())
         # print(x.size(0))
         x = x.view(x.size(0), -1)
-        print(x.size())
+
         x = torch.flatten(x, 1)  # 64*12*12
-        print(x.size())
+
         x = self.fc1(x)
         x = F.relu(x)
         x = self.dropout2(x)

@@ -236,3 +236,319 @@ class BiRNN(nn.Module):
 
 - 还可以计算Euclidian distance来比较相似性，即$||u−v||^2$。距离越大，相似性越小
 
+下面来看代码：
+
+```python
+import torch
+import torch.nn as nn
+
+# 假设有一个词汇表大小为10，每个词嵌入维度为3
+vocab_size = 10
+embedding_dim = 3
+
+# 创建词嵌入层
+embedding = nn.Embedding(vocab_size, embedding_dim)
+
+# 假设有一个包含两个样本的输入，每个样本有4个单词
+input_words = torch.LongTensor([[1, 2, 4, 5], [4, 3, 2, 9]])
+
+# 将输入单词索引传递给词嵌入层，得到词嵌入矩阵
+word_embeddings = embedding(input_words)
+
+# 打印词嵌入矩阵
+print(word_embeddings)
+
+"""
+tensor([[[-0.9920,  0.7159, -1.0296],
+         [ 0.5718, -0.1504,  0.4619],
+         [-1.3106, -0.9321,  1.1739],
+         [ 0.2480,  1.9137, -2.1597]],
+
+        [[-1.3106, -0.9321,  1.1739],
+         [-0.0344,  0.7106,  0.5809],
+         [ 0.5718, -0.1504,  0.4619],
+         [-1.5760,  0.9687,  0.3797]]], grad_fn=<EmbeddingBackward0>)
+"""
+
+print(embedding.weight)
+
+"""
+Parameter containing:
+tensor([[ 0.5201, -0.6770, -1.3804],
+        [ 2.6152, -1.3307,  0.2908],
+        [-0.3248, -1.6289, -0.1328],
+        [-0.1395,  0.5597,  1.1708],
+        [ 1.3347,  1.7835, -0.8744],
+        [ 2.2921,  0.1958, -0.0789],
+        [-0.3342,  0.5067,  0.6638],
+        [ 1.3804, -0.7038, -1.7502],
+        [ 1.7495, -1.2663, -1.7533],
+        [ 0.1371,  0.6841, -0.6419]], requires_grad=True)
+"""
+```
+
+1. **词汇表大小（Vocabulary Size）：** 表示在你的任务中有多少不同的单词。在这个例子中，词汇表大小为10，意味着你考虑的是一个包含10个独立单词的语境。
+2. **词嵌入维度（Embedding Dimension）：** 表示每个单词在嵌入空间中的表示维度。在这个例子中，每个单词的词嵌入维度为3，即每个单词都被表示为一个包含3个数值的向量（即考虑3个不同的语义特征）。
+
+对于单词来说，我们要对每个单词进行标号，用于输入进词嵌入层：
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+torch.manual_seed(1)
+
+word_to_ix = {"hello": 0, "world": 1}
+embeds = nn.Embedding(2, 5)  # 2 words in vocab, 5 dimensional embeddings
+lookup_tensor = torch.tensor([word_to_ix["hello"]], dtype=torch.long)
+hello_embed = embeds(lookup_tensor)
+print(hello_embed)
+```
+
+比如这里把hello标记成1，world标记成2。
+
+> 对于中文该怎么处理呢 ？
+
+中文分词器：https://github.com/fxsjy/jieba
+
+>以上内容涉及了一些NLP相关的知识，对于大量的词汇来说，通常会使用预训练好的embedding来进行训练，因为他的参数已经训练过了，相当于给了一个正确的方向，我们再进行训练时能够很快地进行优化。
+>
+>其实万物皆可embedding，大概思想就是把输入转化成不同的含义。
+
+# 注意力机制
+
+## 自注意力机制（Self-Attention Mechanism）
+
+自注意力机制的基本思想是，在处理序列数据时，每个元素都可以与序列中的其他元素建立关联，而不仅仅是依赖于相邻位置的元素。它通过计算元素之间的相对重要性来自适应地捕捉元素之间的长程依赖关系。
+
+具体而言，对于序列中的每个元素，自注意力机制计算其与其他元素之间的相似度，并将这些相似度归一化为注意力权重。然后，通过将每个元素与对应的注意力权重进行加权求和，可以得到自注意力机制的输出。
+
+![](./img/self_attention.png)
+
+$q$(Query) 的含义一般的解释是用来和其他单词进行匹配，更准确地说是用来计算当前单词或字与其他的单词或字之间的关联或者关系； $k$ (Key) 的含义则是被用来和$q$进行匹配，也可理解为单词或者字的关键信息。
+
+**计算步骤**：
+
+1. 计算$a_1$与所有向量的attention-score
+   $$
+   a_{1,1}=q_1 \cdot  k_1 \\
+   a_{1,2}=q_1 \cdot  k_2 \\
+   a_{1,3}=q_1 \cdot  k_3 \\
+   a_{1,4}=q_1 \cdot  k_4 \\
+   $$
+   
+
+2. 计算$b_1$
+   $$
+   b_1=a_{1,1}\cdot v_1+a_{1,2}\cdot v_2+a_{1,3}\cdot v_3+a_{1,4}\cdot v_4
+   $$
+   
+
+3. 矩阵化运算
+
+   - 仅权重矩阵$W^q,W^k,W^v$为模型需要学习的参数得到$Q,K,V$矩阵
+
+   $$
+   \underbrace{\begin{pmatrix}
+   q_1 & q_2 & q_3 & q_4 
+   \end{pmatrix}
+   }_Q
+   =
+   \begin{bmatrix}
+   & &  \\
+   & W^q  \\
+   & &  \\
+   \end{bmatrix}
+   \underbrace{\begin{pmatrix}
+   a_1 & a_2 & a_3 & a_4 
+   \end{pmatrix}
+   }_{input}\\
+   \underbrace{\begin{pmatrix}
+   k_1 & k_2 & k_3 & k_4 
+   \end{pmatrix}
+   }_K
+   =
+   \begin{bmatrix}
+   & &  \\
+   & W^k  \\
+   & &  \\
+   \end{bmatrix}
+   \underbrace{\begin{pmatrix}
+   a_1 & a_2 & a_3 & a_4 
+   \end{pmatrix}
+   }_{input}\\
+   \underbrace{\begin{pmatrix}
+   v_1 & v_2 & v_3 & v_4 
+   \end{pmatrix}
+   }_V
+   =
+   \begin{bmatrix}
+   & &  \\
+   & W^v  \\
+   & &  \\
+   \end{bmatrix}
+   \underbrace{\begin{pmatrix}
+   a_1 & a_2 & a_3 & a_4 
+   \end{pmatrix}
+   }_{input}
+   $$
+
+   - 计算Attention-Score$a_{i,j}$
+     $$
+     \underbrace{\begin{pmatrix}
+     k_1 \\ k_2 \\ k_3 \\ k_4 
+     \end{pmatrix}
+     }_{K^T}
+     \underbrace{\begin{pmatrix}
+     q_1 & q_2 & q_3 & q_4 
+     \end{pmatrix}
+     }_{Q}=
+     \underbrace{\begin{pmatrix}
+     a_{1,1} & a_{2,1} & a_{3,1} & a_{4,1} \\
+     a_{1,2} & a_{2,2} & a_{3,2} & a_{4,2} \\
+     a_{1,3} & a_{2,3} & a_{3,3} & a_{4,3} \\
+     a_{1,4} & a_{2,4} & a_{3,4} & a_{4,4} \\
+     \end{pmatrix}
+     }_{A}
+     $$
+     
+
+   - Softmax操作以及除$\sqrt d$ 
+     $$
+     A=Softmax(\frac{A}{\sqrt d})
+     $$
+     
+
+   - 计算Self-Attention输出
+     $$
+     \underbrace{\begin{pmatrix}
+     b_1 \\ b_2 \\ b_3 \\ b_4 
+     \end{pmatrix}
+     }_{output}
+     \underbrace{\begin{pmatrix}
+     v_1 & v_2 & v_3 & v_4 
+     \end{pmatrix}
+     }_{V}=
+     \underbrace{\begin{pmatrix}
+     a_{1,1} & a_{2,1} & a_{3,1} & a_{4,1} \\
+     a_{1,2} & a_{2,2} & a_{3,2} & a_{4,2} \\
+     a_{1,3} & a_{2,3} & a_{3,3} & a_{4,3} \\
+     a_{1,4} & a_{2,4} & a_{3,4} & a_{4,4} \\
+     \end{pmatrix}
+     }_{A}
+     $$
+
+**代码示例**
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+# 定义自注意力模块
+class SelfAttention(nn.Module):
+    def __init__(self, embed_dim):
+        super(SelfAttention, self).__init__()
+        self.query = nn.Linear(embed_dim, embed_dim)
+        self.key = nn.Linear(embed_dim, embed_dim)
+        self.value = nn.Linear(embed_dim, embed_dim)
+
+    def forward(self, x):
+        q = self.query(x)
+        k = self.key(x)
+        v = self.value(x)
+        attn_weights = torch.matmul(q, k.transpose(1, 2))
+        attn_weights = nn.functional.softmax(attn_weights, dim=-1)
+        attended_values = torch.matmul(attn_weights, v)
+        return attended_values
+
+# 定义自注意力分类器模型
+class SelfAttentionClassifier(nn.Module):
+    def __init__(self, embed_dim, hidden_dim, num_classes):
+        super(SelfAttentionClassifier, self).__init__()
+        self.attention = SelfAttention(embed_dim)
+        self.fc1 = nn.Linear(embed_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, x):
+        attended_values = self.attention(x)
+        x = attended_values.mean(dim=1)  # 对每个位置的向量求平均
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        return x
+```
+
+## 多头自注意力机制（Multi-head Self-Attention Machanism）
+
+**多头注意力机制是在自注意力机制的基础上发展起来的，是自注意力机制的变体**，旨在增强模型的表达能力和泛化能力。它通过使用多个独立的注意力头，分别计算注意力权重，并将它们的结果进行拼接或加权求和，从而获得更丰富的表示。
+
+![](./img/muti-head.png)
+$$
+b_i=W^o\begin{pmatrix}
+b_{i,1} \\ b_{i,2} 
+\end{pmatrix}
+$$
+
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+# 定义多头自注意力模块
+class MultiHeadSelfAttention(nn.Module):
+    def __init__(self, embed_dim, num_heads):
+        super(MultiHeadSelfAttention, self).__init__()
+        self.num_heads = num_heads
+        self.head_dim = embed_dim // num_heads
+
+        self.query = nn.Linear(embed_dim, embed_dim)
+        self.key = nn.Linear(embed_dim, embed_dim)
+        self.value = nn.Linear(embed_dim, embed_dim)
+        self.fc = nn.Linear(embed_dim, embed_dim)
+
+    def forward(self, x):
+        batch_size, seq_len, embed_dim = x.size()
+
+        # 将输入向量拆分为多个头
+        q = self.query(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        k = self.key(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        v = self.value(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+
+        # 计算注意力权重
+        attn_weights = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(torch.tensor(self.head_dim, dtype=torch.float))
+        attn_weights = torch.softmax(attn_weights, dim=-1)
+
+        # 注意力加权求和
+        attended_values = torch.matmul(attn_weights, v).transpose(1, 2).contiguous().view(batch_size, seq_len, embed_dim)
+
+        # 经过线性变换和残差连接
+        x = self.fc(attended_values) + x
+
+        return x
+
+# 定义多头自注意力分类器模型
+class MultiHeadSelfAttentionClassifier(nn.Module):
+    def __init__(self, embed_dim, num_heads, hidden_dim, num_classes):
+        super(MultiHeadSelfAttentionClassifier, self).__init__()
+        self.attention = MultiHeadSelfAttention(embed_dim, num_heads)
+        self.fc1 = nn.Linear(embed_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, x):
+        x = self.attention(x)
+        x = x.mean(dim=1)  # 对每个位置的向量求平均
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        return x
+```
+
+# 作业
